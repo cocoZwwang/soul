@@ -50,25 +50,34 @@ public class WafPlugin extends AbstractSoulPlugin {
     @Override
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final SoulPluginChain chain, final SelectorData selector, final RuleData rule) {
         WafConfig wafConfig = Singleton.INST.get(WafConfig.class);
+        //如果选择器规则为空
         if (Objects.isNull(selector) && Objects.isNull(rule)) {
+            //如防火墙规则是 black，则直接跳过（黑名单只拦截匹配的流量，不匹配的会跳过）
             if (WafModelEnum.BLACK.getName().equals(wafConfig.getModel())) {
                 return chain.execute(exchange);
             }
+            //如果是 mixed 模式，所有流量都会通过 waf，所以没有配置选择器规则的流量会被拒绝
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             Object error = SoulResultWrap.error(HttpStatus.FORBIDDEN.value(), Constants.REJECT_MSG, null);
             return WebFluxResultUtils.result(exchange, error);
         }
         String handle = rule.getHandle();
+        //如果规则为空或者 permission 为空，则直接跳过。
+        //所以这里注意：再mixed 模式下，选择器为空是会被拦截的，但是规则是默认通过的。
         WafHandle wafHandle = GsonUtils.getInstance().fromJson(handle, WafHandle.class);
         if (Objects.isNull(wafHandle) || StringUtils.isBlank(wafHandle.getPermission())) {
             log.error("waf handler can not configuration：{}", handle);
             return chain.execute(exchange);
         }
+        //如果是拒接策略
         if (WafEnum.REJECT.getName().equals(wafHandle.getPermission())) {
+            //状态码默认403
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+            //返回自定义的状态码
             Object error = SoulResultWrap.error(Integer.parseInt(wafHandle.getStatusCode()), Constants.REJECT_MSG, null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        //允许通过
         return chain.execute(exchange);
     }
 

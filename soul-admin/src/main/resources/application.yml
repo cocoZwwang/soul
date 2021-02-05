@@ -18,19 +18,19 @@ server:
   address: 0.0.0.0
 
 spring:
-  #profiles:
-    #active: h2
+  profiles:
+    active: h2
   thymeleaf:
     cache: true
     encoding: utf-8
     enabled: true
     prefix: classpath:/static/
     suffix: .html
-  datasource:
-    url: jdbc:mysql://localhost:3306/soul?useUnicode=true&characterEncoding=utf-8
-    username: root
-    password:
-    driver-class-name: com.mysql.jdbc.Driver
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/soul?useUnicode=true&characterEncoding=utf-8
+#    username: root
+#    password:
+#    driver-class-name: com.mysql.jdbc.Driver
 
 mybatis:
   config-location: classpath:/mybatis/mybatis-config.xml
